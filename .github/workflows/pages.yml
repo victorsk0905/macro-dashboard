@@ -1,0 +1,73 @@
+# ============================================================================
+#  Weekly Macro Dashboard -> GitHub Pages
+# ----------------------------------------------------------------------------
+#  Runs the macro agent every Friday, generates a fresh dashboard, and
+#  publishes it to a permanent URL:  https://<your-username>.github.io/<repo>/
+#
+#  Save this file at:  .github/workflows/pages.yml
+#  One-time setup steps are in PAGES_SETUP.md
+# ============================================================================
+name: Weekly Macro Dashboard
+
+on:
+  schedule:
+    - cron: "0 8 * * 5"        # every Friday 08:00 UTC (12:00 in Dubai)
+  workflow_dispatch: {}          # also run on demand from the Actions tab
+
+# permissions the Pages deployment needs
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# never run two deploys at once
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install fredapi openpyxl python-docx matplotlib pandas anthropic
+
+      - name: Run the macro agent
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MACRO_OUTDIR: ${{ github.workspace }}/site
+        run: |
+          mkdir -p site
+          python macro_agent.py
+
+      - name: Publish latest dashboard as index.html
+        run: |
+          # the agent writes macro_dashboard_<date>.html — copy the newest to index.html
+          latest=$(ls -t site/macro_dashboard_*.html | head -n1)
+          cp "$latest" site/index.html
+          echo "Published: $latest -> site/index.html"
+          ls -la site/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
