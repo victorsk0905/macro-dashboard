@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Macro Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#0e1116;
+    --panel:#161b22;
+    --panel-2:#1c232d;
+    --line:#283341;
+    --ink:#e6edf3;
+    --ink-dim:#8b98a8;
+    --ink-faint:#5a6675;
+    --amber:#e8a13a;       /* signature warm accent */
+    --good:#3fb27f;
+    --bad:#e0556b;
+    --warn:#d9a441;
+    --ctx:#5e7796;
+    --mono:'JetBrains Mono',monospace;
+    --disp:'Space Grotesk',sans-serif;
+    --body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 80px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{
+    border-bottom:1px solid var(--line);
+    padding:34px 0 26px;
+    margin-bottom:4px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:14px;
+  }
+  h1{
+    font-family:var(--disp);
+    font-size:clamp(28px,4.4vw,46px);
+    font-weight:700;letter-spacing:-.02em;line-height:1.02;
+  }
+  .sub{
+    color:var(--ink-dim);font-size:14px;margin-top:10px;
+    display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+  }
+  .sub .dot{width:4px;height:4px;border-radius:50%;background:var(--ink-faint)}
+  .sub b{color:var(--ink);font-weight:600}
+
+  /* ---------- regime hero ---------- */
+  .hero{
+    display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;margin:26px 0 10px;
+  }
+  .hero-cell{background:var(--panel);padding:20px 22px}
+  .hero-cell.lead{background:linear-gradient(160deg,#1b2230,#141a22)}
+  .hero-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .hero-v{font-family:var(--disp);font-size:26px;font-weight:700;letter-spacing:-.01em}
+  .hero-lead-v{font-size:21px;line-height:1.25;font-weight:600}
+  .hero-note{color:var(--ink-dim);font-size:12.5px;margin-top:8px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
+    padding:3px 9px;border-radius:999px;letter-spacing:.04em}
+  .tag.mixed{background:rgba(217,164,65,.14);color:var(--warn);border:1px solid rgba(217,164,65,.3)}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0 4px;font-size:12px;color:var(--ink-dim)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .chip{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .chip.good{background:var(--good)}.chip.bad{background:var(--bad)}
+  .chip.warn{background:var(--warn)}.chip.ctx{background:var(--ctx)}
+
+  /* ---------- group ---------- */
+  .group{margin-top:40px}
+  .group-head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px}
+  .group-idx{font-family:var(--mono);font-size:12px;color:var(--amber);font-weight:600}
+  .group-title{font-family:var(--disp);font-size:18px;font-weight:600;letter-spacing:-.01em}
+  .group-rule{flex:1;height:1px;background:var(--line)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px}
+
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px 16px 14px;position:relative;transition:border-color .15s,transform .15s;
+    cursor:default;overflow:hidden;
+  }
+  .card:hover{border-color:#36465a;transform:translateY(-2px)}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent}
+  .card.f-good::before{background:var(--good)}
+  .card.f-bad::before{background:var(--bad)}
+  .card.f-warn::before{background:var(--warn)}
+  .card.f-ctx::before{background:var(--ctx)}
+
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:14px}
+  .card-label{font-size:12.5px;color:var(--ink-dim);font-weight:500;line-height:1.35;max-width:64%}
+  .flag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    font-weight:600;padding:3px 7px;border-radius:5px;white-space:nowrap;margin-top:1px}
+  .flag.good{background:rgba(63,178,127,.13);color:var(--good)}
+  .flag.bad{background:rgba(224,85,107,.13);color:var(--bad)}
+  .flag.warn{background:rgba(217,164,65,.13);color:var(--warn)}
+  .flag.ctx{background:rgba(94,119,150,.15);color:#94a8c2}
+
+  .val{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .delta{font-family:var(--mono);font-size:12px;font-weight:500;margin-top:7px;display:flex;align-items:center;gap:6px}
+  .delta .arrow{font-size:11px}
+  .up{color:var(--good)}.down{color:var(--bad)}.flat{color:var(--ink-faint)}
+  .delta .prev{color:var(--ink-faint)}
+
+  .spark{margin-top:13px;height:34px;width:100%;display:block}
+
+  .card-foot{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--ink-faint);line-height:1.4}
+  .asof{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:9px}
+
+  footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line);
+    color:var(--ink-faint);font-size:12px;line-height:1.6}
+  footer b{color:var(--ink-dim)}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  @media(max-width:720px){
+    .hero{grid-template-columns:1fr 1fr}
+    .hero-cell.lead{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Macro Monitor · FRED data</div>
+    <h1>Global Macro Dashboard</h1>
+    <div class="sub">
+      <span>Snapshot <b id="snapDate">—</b></span>
+      <span class="dot"></span>
+      <span><b id="indCount">—</b> indicators</span>
+      <span class="dot"></span>
+      <span>Source: <b>Federal Reserve Economic Data</b></span>
+    </div>
+  </header>
+
+  <!-- regime hero -->
+  <section class="hero" id="hero"></section>
+
+  <div class="legend">
+    <span><i class="chip good"></i> Improving — moved in the healthy direction</span>
+    <span><i class="chip bad"></i> Worsening — moved the unhealthy way</span>
+    <span><i class="chip warn"></i> Stable — essentially unchanged</span>
+    <span><i class="chip ctx"></i> Context — level matters more than direction</span>
+  </div>
+
+  <div id="groups"></div>
+
+  <footer>
+    <b>How to read this:</b> Each tile shows the latest value, the change versus the prior reading, and a 40-period trend line.
+    The coloured edge and flag show whether the latest move was healthy, unhealthy, neutral, or flat.<br><br>
+    Informational only — not investment advice. Generated from the macro agent's data pull.
+  </footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/[];
+
+const GROUPS = ["Growth","Inflation & Money","Rates & Policy","Markets & Currency","Global"];
+const FLAGCLASS = {Improving:"good",Worsening:"bad",Stable:"warn",Context:"ctx"};
+
+function fmtDate(iso){
+  const d=new Date(iso+"T00:00:00");
+  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+}
+
+/* sparkline svg */
+function spark(vals,flag){
+  const w=226,h=34,pad=3;
+  const min=Math.min(...vals),max=Math.max(...vals);
+  const rng=(max-min)||1;
+  const stepX=(w-pad*2)/(vals.length-1);
+  const pts=vals.map((v,i)=>{
+    const x=pad+i*stepX;
+    const y=pad+(h-pad*2)*(1-(v-min)/rng);
+    return [x,y];
+  });
+  const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const colorMap={good:"#3fb27f",bad:"#e0556b",warn:"#d9a441",ctx:"#6f89a8"};
+  const c=colorMap[FLAGCLASS[flag]]||"#6f89a8";
+  const area=`M${pad} ${h} `+pts.map(p=>"L"+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ")+` L${(w-pad).toFixed(1)} ${h} Z`;
+  const last=pts[pts.length-1];
+  const gid="g"+Math.random().toString(36).slice(2,8);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="${c}" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="${c}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${d}" fill="none" stroke="${c}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.4" fill="${c}"/>
+  </svg>`;
+}
+
+function deltaBlock(d){
+  const chg=d.chg;
+  let dir="flat",arrow="→";
+  if(Math.abs(chg)>1e-9){ dir=chg>0?"up":"down"; arrow=chg>0?"▲":"▼"; }
+  // For "good=down" indicators an up move is unhealthy, but we keep the arrow literal (actual direction)
+  let chgTxt;
+  if(d.unit==="count_k") chgTxt=(chg>=0?"+":"")+(chg/1000).toFixed(0)+"k";
+  else if(["pct","qoq_annualized","index_yoy"].includes(d.unit)) chgTxt=(chg>=0?"+":"")+chg.toFixed(2);
+  else if(d.unit==="usd") chgTxt=(chg>=0?"+":"")+chg.toFixed(2);
+  else if(d.unit==="fx") chgTxt=(chg>=0?"+":"")+chg.toFixed(3);
+  else chgTxt=(chg>=0?"+":"")+chg.toFixed(1);
+  return `<div class="delta">
+    <span class="${dir}"><span class="arrow">${arrow}</span> ${chgTxt}</span>
+    <span class="prev">vs ${d.prior_fmt}</span>
+  </div>`;
+}
+
+function card(d){
+  const fc=FLAGCLASS[d.flag];
+  return `<div class="card f-${fc}">
+    <div class="card-top">
+      <div class="card-label">${d.label}</div>
+      <div class="flag ${fc}">${d.flag}</div>
+    </div>
+    <div class="val">${d.latest_fmt}</div>
+    ${deltaBlock(d)}
+    ${spark(d.spark,d.flag)}
+    <div class="card-foot">${d.note}</div>
+    <div class="asof">As of ${fmtDate(d.latest_date)}</div>
+  </div>`;
+}
+
+/* ---- regime hero computation ---- */
+function buildHero(){
+  const get=id=>DATA.find(x=>x.id===id)||{};
+  const pce=get("PCEPILFE"), un=get("UNRATE"), curve=get("T10Y2Y"),
+        hy=get("BAMLH0A0HYM2"), dxy=get("DTWEXBGS"), gdp=get("GDPC1");
+
+  // simple regime logic
+  const inflHot = (pce.latest||0)>2.5;
+  const curveOk = (curve.latest||0)>0;
+  const creditCalm = (hy.latest||0)<4;
+  const growthPos = (gdp.latest||0)>0;
+  let regime="Mixed", why="sticky inflation, resilient growth, calm credit";
+  if(inflHot && growthPos && creditCalm){ regime="Mixed"; why="inflation above target, growth holding, no credit stress"; }
+
+  const cells=[
+    {k:"This week's read",lead:true,v:"Inflation is the sore spot; growth and credit are steady",
+     note:`Regime: <span class="tag mixed">${regime}</span> &nbsp;${why}`},
+    {k:"Core PCE (Fed gauge)",v:pce.latest_fmt||"—",note:(pce.latest>2?"Above the 2% target":"At target")},
+    {k:"Yield curve 10Y-2Y",v:curve.latest_fmt||"—",note:(curveOk?"Positive — no recession flag":"Inverted — warning")},
+    {k:"Credit spread (HY)",v:hy.latest_fmt||"—",note:(creditCalm?"Calm — no distress priced":"Elevated — stress")},
+  ];
+  document.getElementById("hero").innerHTML=cells.map(c=>`
+    <div class="hero-cell ${c.lead?'lead':''}">
+      <div class="hero-k">${c.k}</div>
+      <div class="${c.lead?'hero-v hero-lead-v':'hero-v'}">${c.v}</div>
+      <div class="hero-note">${c.note}</div>
+    </div>`).join("");
+}
+
+function render(){
+  document.getElementById("snapDate").textContent=fmtDate(
+    DATA.map(d=>d.latest_date).sort().slice(-1)[0]);
+  document.getElementById("indCount").textContent=DATA.length;
+  buildHero();
+  const host=document.getElementById("groups");
+  GROUPS.forEach((g,i)=>{
+    const items=DATA.filter(d=>d.group===g);
+    if(!items.length) return;
+    const sec=document.createElement("div");
+    sec.className="group";
+    sec.innerHTML=`
+      <div class="group-head">
+        <span class="group-idx">${String(i+1).padStart(2,"0")}</span>
+        <span class="group-title">${g}</span>
+        <span class="group-rule"></span>
+      </div>
+      <div class="grid">${items.map(card).join("")}</div>`;
+    host.appendChild(sec);
+  });
+}
+render();
+</script>
+</body>
+</html>
