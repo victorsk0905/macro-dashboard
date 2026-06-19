@@ -83,7 +83,7 @@ INDICATORS = [
          freq="Daily", transform=None, good=None,
          note="The ECB's main policy rate. The euro-side counterpart to the Fed funds rate."),
     dict(id="CHNCPIALLMINMEI", label="China CPI (YoY)", group="Global", unit="pct",
-         freq="Monthly", transform="yoy_pct", good=None,
+         freq="Monthly", transform=None, good=None,
          note="China consumer inflation. Near zero / negative signals weak domestic demand."),
     dict(id="DEXCHUS", label="China Yuan per USD", group="Global", unit="fx",
          freq="Daily", transform=None, good=None,

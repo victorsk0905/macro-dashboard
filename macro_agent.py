@@ -41,6 +41,21 @@ def get_fred_client():
 
 def fetch_series(fred, ind):
     """Return a dict with latest value, prior value, change, and a recent window."""
+    # External override: some FRED series are stale; pull fresh from the provider.
+    raw = None
+    try:
+        from external_sources import EXTERNAL_OVERRIDES
+    except Exception:
+        EXTERNAL_OVERRIDES = {}
+    if ind["id"] in EXTERNAL_OVERRIDES:
+        _provider, fetcher = EXTERNAL_OVERRIDES[ind["id"]]
+        ext = fetcher()
+        if ext is not None and not ext.empty:
+            # external data arrives already in final form (rate % or computed YoY)
+            series = ext.dropna()
+            return _finalize(series, ind)
+        # else fall through to FRED as a backstop
+
     raw = fred.get_series(ind["id"]).dropna()
     if raw.empty:
         return None
@@ -58,10 +73,14 @@ def fetch_series(fred, ind):
     if series.empty:
         return None
 
+    return _finalize(series, ind)
+
+
+def _finalize(series, ind):
+    """Build the standard record dict from a final-form series."""
     latest = series.iloc[-1]
     latest_date = series.index[-1].date()
     prior = series.iloc[-2] if len(series) > 1 else float("nan")
-    # value 1 year ago (for context on slow series)
     try:
         year_ago = series.asof(series.index[-1] - pd.DateOffset(years=1))
     except Exception:
@@ -74,7 +93,7 @@ def fetch_series(fred, ind):
         prior=float(prior),
         chg=float(latest - prior),
         year_ago=float(year_ago) if pd.notna(year_ago) else float("nan"),
-        window=series.tail(60),       # for charting
+        window=series.tail(60),
     )
 
 
@@ -421,7 +440,7 @@ def build_word(records, chart_path, analysis=None):
 
 
 # ------------------------------------------------------------- HTML DASHBOARD
-def build_dashboard(records):
+def build_dashboard(records, analysis=None):
     """Render the interactive single-file HTML dashboard from a template."""
     import json
     tpl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -435,7 +454,7 @@ def build_dashboard(records):
         ind = r["ind"]
         payload.append(dict(
             id=ind["id"], label=ind["label"], group=ind["group"], unit=ind["unit"],
-            note=ind["note"], good=ind["good"],
+            note=ind["note"], good=ind["good"], freq=ind.get("freq", ""),
             latest=round(r["latest"], 3), prior=round(r["prior"], 3),
             chg=round(r["chg"], 3),
             latest_date=r["latest_date"].isoformat(),
@@ -445,8 +464,22 @@ def build_dashboard(records):
             spark=[round(float(x), 3) for x in r["window"].tail(40).tolist()],
         ))
 
+    # analysis block for the Analysis tab; fall back to rule-based read if no Claude
+    if analysis:
+        analysis_payload = analysis
+    else:
+        analysis_payload = {
+            "headline": overall_read(records),
+            "narrative": "",
+            "watch": [],
+            "regime": "",
+            "rule_based": True,
+        }
+
     tpl = open(tpl_path).read()
     html = tpl.replace("/*__DATA__*/[]", json.dumps(payload))
+    html = html.replace("/*__ANALYSIS__*/null", json.dumps(analysis_payload))
+    html = html.replace("/*__GENERATED__*/\"\"", json.dumps(TODAY))
     path = os.path.join(OUTDIR, f"macro_dashboard_{TODAY}.html")
     with open(path, "w") as f:
         f.write(html)
@@ -480,7 +513,7 @@ def main():
     analysis = generate_analysis(records, fmt, TODAY)
 
     docx = build_word(records, png, analysis)
-    html = build_dashboard(records)
+    html = build_dashboard(records, analysis)
 
     print("\nDone. Files written:")
     for p in (html, docx, xlsx, png):

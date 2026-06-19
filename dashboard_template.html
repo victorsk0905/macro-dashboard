@@ -59,6 +59,37 @@
   .sub .dot{width:4px;height:4px;border-radius:50%;background:var(--ink-faint)}
   .sub b{color:var(--ink);font-weight:600}
 
+  /* ---------- nav tabs ---------- */
+  .tabs{display:flex;gap:4px;margin-top:22px}
+  .tab{
+    font-family:var(--body);font-size:14px;font-weight:600;color:var(--ink-dim);
+    background:transparent;border:none;border-bottom:2px solid transparent;
+    padding:9px 16px;cursor:pointer;transition:color .15s,border-color .15s;letter-spacing:-.01em;
+  }
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+  /* ---------- analysis view ---------- */
+  .an-wrap{max-width:760px}
+  .an-regime{display:inline-flex;align-items:center;gap:10px;margin:28px 0 18px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+  .an-regime .pill{padding:4px 12px;border-radius:999px;font-weight:600;
+    background:rgba(217,164,65,.14);color:var(--warn);border:1px solid rgba(217,164,65,.3)}
+  .an-headline{font-family:var(--disp);font-size:clamp(22px,3vw,30px);font-weight:600;
+    letter-spacing:-.02em;line-height:1.2;margin-bottom:24px}
+  .an-narrative p{font-size:15.5px;line-height:1.7;color:#cdd6e0;margin-bottom:16px}
+  .an-watch{margin-top:34px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:24px 26px}
+  .an-watch h3{font-family:var(--disp);font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:16px;font-weight:600}
+  .an-watch ul{list-style:none}
+  .an-watch li{position:relative;padding-left:22px;margin-bottom:12px;font-size:14.5px;
+    line-height:1.55;color:#cdd6e0}
+  .an-watch li:last-child{margin-bottom:0}
+  .an-watch li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;
+    border-radius:2px;background:var(--amber)}
+  .an-credit{margin-top:26px;font-size:12px;color:var(--ink-faint);font-style:italic}
+
   /* ---------- regime hero ---------- */
   .hero{
     display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:1px;
@@ -121,7 +152,10 @@
 
   .card-foot{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
     font-size:11px;color:var(--ink-faint);line-height:1.4}
-  .asof{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:9px}
+  .asof{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:9px;
+    display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .freqtag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;
+    color:#7c8a9c;background:rgba(124,138,156,.12);padding:2px 6px;border-radius:4px;white-space:nowrap}
 
   footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line);
     color:var(--ink-faint);font-size:12px;line-height:1.6}
@@ -138,38 +172,55 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Macro Monitor · FRED data</div>
+    <div class="eyebrow">Macro Monitor · FRED + Eurostat + IMF</div>
     <h1>Global Macro Dashboard</h1>
     <div class="sub">
       <span>Snapshot <b id="snapDate">—</b></span>
       <span class="dot"></span>
       <span><b id="indCount">—</b> indicators</span>
       <span class="dot"></span>
-      <span>Source: <b>Federal Reserve Economic Data</b></span>
+      <span>Updated <b id="genDate">—</b></span>
     </div>
+    <nav class="tabs">
+      <button class="tab active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="analysis">Analysis</button>
+    </nav>
   </header>
 
-  <!-- regime hero -->
-  <section class="hero" id="hero"></section>
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <section id="view-dashboard" class="view">
+    <section class="hero" id="hero"></section>
 
-  <div class="legend">
-    <span><i class="chip good"></i> Improving — moved in the healthy direction</span>
-    <span><i class="chip bad"></i> Worsening — moved the unhealthy way</span>
-    <span><i class="chip warn"></i> Stable — essentially unchanged</span>
-    <span><i class="chip ctx"></i> Context — level matters more than direction</span>
-  </div>
+    <div class="legend">
+      <span><i class="chip good"></i> Improving — moved in the healthy direction</span>
+      <span><i class="chip bad"></i> Worsening — moved the unhealthy way</span>
+      <span><i class="chip warn"></i> Stable — essentially unchanged</span>
+      <span><i class="chip ctx"></i> Context — level matters more than direction</span>
+    </div>
 
-  <div id="groups"></div>
+    <div id="groups"></div>
 
-  <footer>
-    <b>How to read this:</b> Each tile shows the latest value, the change versus the prior reading, and a 40-period trend line.
-    The coloured edge and flag show whether the latest move was healthy, unhealthy, neutral, or flat.<br><br>
-    Informational only — not investment advice. Generated from the macro agent's data pull.
-  </footer>
+    <footer>
+      <b>How to read this:</b> Each tile shows the latest value, the change versus the prior reading, the data's release frequency, and a 40-period trend line.
+      The coloured edge and flag show whether the latest move was healthy, unhealthy, neutral, or flat.<br><br>
+      Most indicators are published on a fixed schedule (quarterly GDP, monthly inflation), so a date like "1 May" is the latest official print, not stale data. Daily market series update within a day or two.<br><br>
+      Sources: Federal Reserve Economic Data (FRED), Eurostat (euro-area unemployment), IMF via DBnomics (China CPI). Informational only — not investment advice.
+    </footer>
+  </section>
+
+  <!-- ============ ANALYSIS VIEW ============ -->
+  <section id="view-analysis" class="view" style="display:none">
+    <div id="analysisBody"></div>
+    <footer>
+      The written analysis is generated from the same data shown on the Dashboard tab. Informational only — not investment advice.
+    </footer>
+  </section>
 </div>
 
 <script>
 const DATA = /*__DATA__*/[];
+const ANALYSIS = /*__ANALYSIS__*/null;
+const GENERATED = /*__GENERATED__*/"";
 
 const GROUPS = ["Growth","Inflation & Money","Rates & Policy","Markets & Currency","Global"];
 const FLAGCLASS = {Improving:"good",Worsening:"bad",Stable:"warn",Context:"ctx"};
@@ -235,7 +286,7 @@ function card(d){
     ${deltaBlock(d)}
     ${spark(d.spark,d.flag)}
     <div class="card-foot">${d.note}</div>
-    <div class="asof">As of ${fmtDate(d.latest_date)}</div>
+    <div class="asof"><span>As of ${fmtDate(d.latest_date)}</span><span class="freqtag">${d.freq||""}</span></div>
   </div>`;
 }
 
@@ -289,6 +340,76 @@ function render(){
     host.appendChild(sec);
   });
 }
+
+/* ---- analysis tab ---- */
+function renderAnalysis(){
+  const a=ANALYSIS||{};
+  const host=document.getElementById("analysisBody");
+  if(!a.headline){ host.innerHTML="<p>No analysis available.</p>"; return; }
+
+  // narrative may contain \n-separated paragraphs
+  const paras=String(a.narrative||"").split("\n").filter(p=>p.trim());
+  const watch=Array.isArray(a.watch)?a.watch:(a.watch?[a.watch]:[]);
+
+  let html=`<div class="an-wrap">`;
+  if(a.regime){
+    html+=`<div class="an-regime">Regime <span class="pill">${a.regime}</span></div>`;
+  }
+  html+=`<div class="an-headline">${a.headline}</div>`;
+  if(paras.length) html+=`<div class="an-narrative">${paras.map(p=>`<p>${p}</p>`).join("")}</div>`;
+  if(watch.length){
+    html+=`<div class="an-watch"><h3>What to watch next</h3><ul>${
+      watch.map(w=>`<li>${w}</li>`).join("")}</ul></div>`;
+  }
+  html+=`<div class="an-credit">${a.rule_based
+    ? "Generated from this week's data (rule-based summary — add an Anthropic key for a richer narrative)."
+    : "Narrative written by Claude from this week's data."}</div>`;
+  html+=`</div>`;
+  host.innerHTML=html;
+}
+
+/* ---- tab switching ---- */
+function setupTabs(){
+  const tabs=document.querySelectorAll(".tab");
+  tabs.forEach(t=>t.addEventListener("click",()=>{
+    tabs.forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const v=t.dataset.view;
+    document.getElementById("view-dashboard").style.display = v==="dashboard"?"block":"none";
+    document.getElementById("view-analysis").style.display  = v==="analysis"?"block":"none";
+    window.scrollTo(0,0);
+  }));
+}
+
+function render(){
+  document.getElementById("snapDate").textContent=fmtDate(
+    DATA.map(d=>d.latest_date).sort().slice(-1)[0]);
+  document.getElementById("indCount").textContent=DATA.length;
+  document.getElementById("genDate").textContent=GENERATED?fmtDate(GENERATED):"—";
+  buildHero();
+  renderGroups();
+  renderAnalysis();
+  setupTabs();
+}
+
+function renderGroups(){
+  const host=document.getElementById("groups");
+  GROUPS.forEach((g,i)=>{
+    const items=DATA.filter(d=>d.group===g);
+    if(!items.length) return;
+    const sec=document.createElement("div");
+    sec.className="group";
+    sec.innerHTML=`
+      <div class="group-head">
+        <span class="group-idx">${String(i+1).padStart(2,"0")}</span>
+        <span class="group-title">${g}</span>
+        <span class="group-rule"></span>
+      </div>
+      <div class="grid">${items.map(card).join("")}</div>`;
+    host.appendChild(sec);
+  });
+}
+
 render();
 </script>
 </body>
